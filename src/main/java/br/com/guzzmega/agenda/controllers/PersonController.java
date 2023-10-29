@@ -1,10 +1,10 @@
 package br.com.guzzmega.agenda.controllers;
 
 import br.com.guzzmega.agenda.dtos.PersonRecord;
-import br.com.guzzmega.agenda.models.PersonModel;
-import br.com.guzzmega.agenda.repositories.PersonRepository;
+import br.com.guzzmega.agenda.models.Person;
+import br.com.guzzmega.agenda.services.PersonService;
+import br.com.guzzmega.agenda.services.exceptions.ValidationException;
 import jakarta.validation.Valid;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,23 +21,24 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 public class PersonController {
 
 	@Autowired
-    PersonRepository personRepository;
+    private PersonService personService;
 
 	@PostMapping("/persons")
-	public ResponseEntity<PersonModel> savePerson(@RequestBody @Valid PersonRecord personRecord){
-		var personModel = new PersonModel();
-		BeanUtils.copyProperties(personRecord, personModel);
-
-		return ResponseEntity.status(HttpStatus.CREATED).body(personRepository.save(personModel));
+	public ResponseEntity<Object> insert(@RequestBody @Valid PersonRecord personRecord){
+		try	{
+			return ResponseEntity.status(HttpStatus.CREATED).body(personService.save(personRecord));
+		} catch (ValidationException validationException) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validationException.getMessage());
+		}
 	}
 
 	@GetMapping("/persons")
-	public ResponseEntity<List<PersonModel>> getAllPersons(){
-		List<PersonModel> personList = personRepository.findAll();
+	public ResponseEntity<List<Person>> getAll(){
+		List<Person> personList = personService.findAll();
 
 		if(!personList.isEmpty()){
-			for(PersonModel person : personList){
-				person.add(linkTo(methodOn(PersonController.class).getOnePerson(person.getIdPerson())).withSelfRel());
+			for(Person person : personList){
+				person.add(linkTo(methodOn(PersonController.class).getOne(person.getIdPerson())).withSelfRel());
 			}
 		}
 
@@ -45,38 +46,37 @@ public class PersonController {
 	}
 
 	@GetMapping("/persons/{id}")
-	public ResponseEntity<Object> getOnePerson(@PathVariable(value="id") UUID id){
-		Optional<PersonModel> personOptional = personRepository.findById(id);
+	public ResponseEntity<Object> getOne(@PathVariable(value="id") UUID id){
+		Optional<Person> personOptional = personService.findById(id);
 
 		if(personOptional.isEmpty()){
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(String.format("Can't find person with ID %s", id));
 		}
 
-		personOptional.get().add(linkTo(methodOn(PersonController.class).getAllPersons()).withRel("personList"));
+		personOptional.get().add(linkTo(methodOn(PersonController.class).getAll()).withRel("personList"));
 		return ResponseEntity.status(HttpStatus.OK).body(personOptional.get());
 	}
 
 	@PutMapping("/persons/{id}")
-	public ResponseEntity<Object> putPerson(@RequestBody @Valid PersonRecord personRecord, @PathVariable(value="id" ) UUID id){
-		Optional<PersonModel> personOptional = personRepository.findById(id);
+	public ResponseEntity<Object> update(@RequestBody @Valid PersonRecord personRecord, @PathVariable(value="id" ) UUID id){
+		try	{
+			Optional<Person> personOptional = personService.findById(id);
+			if(personOptional.isEmpty()){
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body(String.format("Can't find person with ID %s", id));
+			}
 
-		if(personOptional.isEmpty()){
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(String.format("Can't find person with ID %s", id));
+			return ResponseEntity.status(HttpStatus.OK).body(personService.update(personRecord, personOptional.get()));
+		} catch (ValidationException validationException) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validationException.getMessage());
 		}
-
-		BeanUtils.copyProperties(personRecord, personOptional.get());
-		return ResponseEntity.status(HttpStatus.OK).body(personRepository.save(personOptional.get()));
 	}
 
 	@DeleteMapping("/persons/{id}")
-	public ResponseEntity<Object> deleteModel(@PathVariable(value="id") UUID id){
-		Optional<PersonModel> personOptional = personRepository.findById(id);
-
-		if(personOptional.isEmpty()){
+	public ResponseEntity<Object> delete(@PathVariable(value="id") UUID id){
+		if(!personService.delete(id)){
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(String.format("Can't find person with ID %s", id));
 		}
 
-		personRepository.delete(personOptional.get());
 		return ResponseEntity.status(HttpStatus.OK).body("Person deleted successfully!");
 	}
 }

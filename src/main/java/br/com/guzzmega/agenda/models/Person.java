@@ -1,16 +1,19 @@
 package br.com.guzzmega.agenda.models;
 
+import br.com.guzzmega.agenda.dtos.PersonRecord;
 import jakarta.persistence.*;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.RepresentationModel;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
 @Table(name = "TB_PERSON")
-public class PersonModel extends RepresentationModel<PersonModel> implements Serializable {
+public class Person extends RepresentationModel<Person> implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	@Id
@@ -18,10 +21,24 @@ public class PersonModel extends RepresentationModel<PersonModel> implements Ser
 	private UUID idPerson;
 	private String name;
 	private String document;
-	private String phoneNumber;
-	private String email;
+
 	@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
 	private LocalDate birthDate;
+
+	@OneToMany(mappedBy = "person", cascade = CascadeType.ALL)
+	private Set<Contact> contacts = new HashSet<>();
+
+	public Person() {
+	}
+
+	public Person(PersonRecord personRecord){
+		this.name = personRecord.name();
+		this.document = personRecord.document();
+		this.birthDate = personRecord.birthDate();
+		personRecord.contacts().forEach(cr ->
+			this.contacts.add(new Contact(cr, this))
+		);
+	}
 
 	public UUID getIdPerson(){
 		return idPerson;
@@ -47,27 +64,19 @@ public class PersonModel extends RepresentationModel<PersonModel> implements Ser
 		this.document = document;
 	}
 
-	public String getPhoneNumber() {
-		return phoneNumber;
-	}
-
-	public void setPhoneNumber(String phoneNumber) {
-		this.phoneNumber = phoneNumber;
-	}
-
-	public String getEmail() {
-		return email;
-	}
-
-	public void setEmail(String email) {
-		this.email = email;
-	}
-
 	public LocalDate getBirthDate() {
 		return birthDate;
 	}
 
 	public void setBirthDate(LocalDate birthDate) {
 		this.birthDate = birthDate;
+	}
+
+	public Set<Contact> getContacts()	{
+		return contacts;
+	}
+
+	public void setContacts(Set<Contact> contacts) {
+		this.contacts = contacts;
 	}
 }
