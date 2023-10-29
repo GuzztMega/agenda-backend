@@ -1,6 +1,8 @@
-package br.com.guzzmega.agenda.models;
+package br.com.guzzmega.agenda.domain;
 
-import br.com.guzzmega.agenda.dtos.PersonRecord;
+import br.com.guzzmega.agenda.domain.dtos.PersonRecord;
+import br.com.guzzmega.agenda.service.exception.ValidationException;
+import br.com.guzzmega.agenda.utils.DocumentUtils;
 import jakarta.persistence.*;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.hateoas.RepresentationModel;
@@ -32,12 +34,50 @@ public class Person extends RepresentationModel<Person> implements Serializable 
 	}
 
 	public Person(PersonRecord personRecord){
+		Set<Contact> contactSet = new HashSet<>();
+		personRecord.contacts().forEach(cr ->
+				contactSet.add(new Contact(cr, this))
+		);
+
+		this.validate(personRecord.name(),personRecord.document(),personRecord.birthDate(), contactSet);
+
 		this.name = personRecord.name();
 		this.document = personRecord.document();
 		this.birthDate = personRecord.birthDate();
-		personRecord.contacts().forEach(cr ->
-			this.contacts.add(new Contact(cr, this))
-		);
+		this.contacts = contactSet;
+	}
+
+	public Person(UUID idPerson, String name, String document, LocalDate birthDate, Set<Contact> contacts) {
+		this.validate(name,document,birthDate,contacts);
+
+		this.idPerson = idPerson;
+		this.name = name;
+		this.document = document;
+		this.birthDate = birthDate;
+		this.contacts = contacts;
+	}
+
+	@Override
+	public String toString() {
+		return "Person{ id=" + idPerson + ", name='" + name + "'" + ", document='" + document + "'" + ", birthDate=" + birthDate + ", contacts=" + contacts + '}';
+	}
+
+	private void validate(String name, String document, LocalDate birthDate, Set<Contact> contacts){
+		if(!DocumentUtils.isValidCPF(document))        {
+			throw new ValidationException("Document: Invalid CPF");
+		}
+
+		if(birthDate.isAfter(LocalDate.now())){
+			throw new ValidationException("BirthDate: can't be in the future");
+		}
+
+		if(name.isEmpty()){
+			throw new ValidationException("Name is mandatory");
+		}
+
+		if(contacts.isEmpty()){
+			throw new ValidationException("Contacts: must have at least one Contact");
+		}
 	}
 
 	public UUID getIdPerson(){

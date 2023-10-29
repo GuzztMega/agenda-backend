@@ -1,0 +1,4 @@
+NAME; DOCUMENT; BIRTHDATE; MESSAGE
+NULL; 91038891060; 1991-05-05; Name is mandatory
+João; NULL; 1991-05-05; Document is mandatory
+João; 91038891060; NULL; Birthdate is mandatory

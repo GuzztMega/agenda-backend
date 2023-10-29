@@ -1,9 +1,9 @@
-package br.com.guzzmega.agenda.controllers;
+package br.com.guzzmega.agenda.controller;
 
-import br.com.guzzmega.agenda.dtos.PersonRecord;
-import br.com.guzzmega.agenda.models.Person;
-import br.com.guzzmega.agenda.services.PersonService;
-import br.com.guzzmega.agenda.services.exceptions.ValidationException;
+import br.com.guzzmega.agenda.domain.dtos.PersonRecord;
+import br.com.guzzmega.agenda.domain.Person;
+import br.com.guzzmega.agenda.service.PersonService;
+import br.com.guzzmega.agenda.service.exception.ValidationException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

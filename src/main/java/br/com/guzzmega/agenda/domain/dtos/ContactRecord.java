@@ -1,4 +1,4 @@
-package br.com.guzzmega.agenda.dtos;
+package br.com.guzzmega.agenda.domain.dtos;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

@@ -1,4 +1,4 @@
-package br.com.guzzmega.agenda.services.exceptions;
+package br.com.guzzmega.agenda.service.exception;
 
 public class ValidationException extends RuntimeException{
     private static final long serialVersionUID = 1L;

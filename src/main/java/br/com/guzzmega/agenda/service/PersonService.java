@@ -1,19 +1,20 @@
-package br.com.guzzmega.agenda.services;
+package br.com.guzzmega.agenda.service;
 
-import br.com.guzzmega.agenda.dtos.PersonRecord;
-import br.com.guzzmega.agenda.models.Contact;
-import br.com.guzzmega.agenda.models.Person;
-import br.com.guzzmega.agenda.repositories.ContactRepository;
-import br.com.guzzmega.agenda.repositories.PersonRepository;
-import br.com.guzzmega.agenda.services.exceptions.ValidationException;
-import br.com.guzzmega.agenda.utils.DocumentUtils;
+import br.com.guzzmega.agenda.domain.Contact;
+import br.com.guzzmega.agenda.domain.Person;
+import br.com.guzzmega.agenda.domain.dtos.PersonRecord;
+import br.com.guzzmega.agenda.repository.ContactRepository;
+import br.com.guzzmega.agenda.repository.PersonRepository;
+import br.com.guzzmega.agenda.service.exception.ValidationException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class PersonService {
@@ -43,20 +44,6 @@ public class PersonService {
 
     @Transactional
     public Person save(Person person) throws ValidationException {
-        if(!DocumentUtils.isValidCPF(person.getDocument()))        {
-            throw new ValidationException("Document: Invalid CPF");
-        }
-
-        if(person.getBirthDate().isAfter(LocalDate.now())){
-            throw new ValidationException("BirthDate: can't be in the future");
-        }
-
-        if(person.getContacts().isEmpty()){
-            throw new ValidationException("Contacts: must have at least one Contact");
-        } else {
-            person.getContacts().forEach(this::validateContact);
-        }
-
         Person savedPerson = personRepository.save(person);
         contactRepository.saveAll(savedPerson.getContacts());
         return savedPerson;
@@ -86,21 +73,5 @@ public class PersonService {
         return false;
     }
 
-    private void validateContact(Contact contact){
-        if(contact.getNickName().isEmpty()){
-            throw new ValidationException("Contact: Nickname is mandatory");
-        }
 
-        if(contact.getPhoneNumber().isEmpty()){
-            throw new ValidationException("Contact: Phone Number is mandatory");
-        }
-
-        if(contact.getEmail().isEmpty()){
-            throw new ValidationException("Contact: Email is mandatory");
-        }
-
-        if(!contact.getEmail().contains("@") || !contact.getEmail().contains(".")){
-            throw new ValidationException("Contact: Invalid Email");
-        }
-    }
 }

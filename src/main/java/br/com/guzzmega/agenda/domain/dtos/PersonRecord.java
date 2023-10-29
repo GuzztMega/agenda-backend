@@ -1,4 +1,4 @@
-package br.com.guzzmega.agenda.dtos;
+package br.com.guzzmega.agenda.domain.dtos;
 
 import jakarta.validation.constraints.*;
 
@@ -16,7 +16,6 @@ public record PersonRecord(
         @NotNull(message = "BirthDate: mandatory")
         LocalDate birthDate,
 
-        @NotNull(message = "Contacts: must have at least one Contact")
         @NotEmpty(message = "Contacts: must have at least one Contact")
         List<ContactRecord> contacts) {
 }

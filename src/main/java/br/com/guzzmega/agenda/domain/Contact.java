@@ -1,6 +1,7 @@
-package br.com.guzzmega.agenda.models;
+package br.com.guzzmega.agenda.domain;
 
-import br.com.guzzmega.agenda.dtos.ContactRecord;
+import br.com.guzzmega.agenda.domain.dtos.ContactRecord;
+import br.com.guzzmega.agenda.service.exception.ValidationException;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.Valid;
@@ -31,10 +32,40 @@ public class Contact extends RepresentationModel<Contact> implements Serializabl
     }
 
     public Contact(@Valid ContactRecord contactRecord, Person person){
+        validate(contactRecord.nickName(), contactRecord.phoneNumber(), contactRecord.email());
+
         this.nickName = contactRecord.nickName();
         this.phoneNumber = contactRecord.phoneNumber();
         this.email = contactRecord.email();
         this.person = person;
+    }
+
+    public Contact(UUID idContact, String nickName, String phoneNumber, String email, Person person) {
+        validate(nickName, phoneNumber, email);
+
+        this.idContact = idContact;
+        this.nickName = nickName;
+        this.phoneNumber = phoneNumber;
+        this.email = email;
+        this.person = person;
+    }
+
+    private void validate(String nickName, String phoneNumber, String email){
+        if(nickName.isEmpty()){
+            throw new ValidationException("Contact: Nickname is mandatory");
+        }
+
+        if(phoneNumber.isEmpty()){
+            throw new ValidationException("Contact: Phone Number is mandatory");
+        }
+
+        if(email.isEmpty()){
+            throw new ValidationException("Contact: Email is mandatory");
+        }
+
+        if(!email.contains("@") || !email.contains(".")){
+            throw new ValidationException("Contact: Invalid Email");
+        }
     }
 
     @Override
@@ -42,12 +73,25 @@ public class Contact extends RepresentationModel<Contact> implements Serializabl
         if (this == o) return true;
         if (!(o instanceof Contact contact)) return false;
         if (!super.equals(o)) return false;
-        return Objects.equals(getPhoneNumber(), contact.getPhoneNumber()) && Objects.equals(getEmail(), contact.getEmail());
+        if(getPerson() != null && contact.getPerson() != null){
+            return Objects.equals(getNickName(), contact.getNickName()) && Objects.equals(getPerson(), contact.getPerson());
+        } else {
+            return Objects.equals(getPhoneNumber(), contact.getPhoneNumber()) && Objects.equals(getEmail(), contact.getEmail());
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "Contact{ id=" + idContact + ", nickName='" + nickName + "'" + ", phoneNumber='" + phoneNumber + "'" + ", email='" + email + "' }";
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), getPhoneNumber(), getEmail());
+        if(getPerson() != null){
+            return Objects.hash(super.hashCode(), getNickName(), getPerson());
+        } else {
+            return Objects.hash(super.hashCode(), getPhoneNumber(), getEmail());
+        }
     }
 
     public UUID getIdContact() {

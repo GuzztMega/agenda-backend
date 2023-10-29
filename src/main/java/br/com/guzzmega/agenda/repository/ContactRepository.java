@@ -1,6 +1,6 @@
-package br.com.guzzmega.agenda.repositories;
+package br.com.guzzmega.agenda.repository;
 
-import br.com.guzzmega.agenda.models.Contact;
+import br.com.guzzmega.agenda.domain.Contact;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
